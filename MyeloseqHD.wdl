@@ -301,7 +301,7 @@ task dragen_align {
      Int readfamilysize
 
      String batch = basename(OutputDir)
-     String StagingDir = "/staging/runs/MyeloSeqHD/"
+     String StagingDir = "/staging/xfer/ajay/MyeloSeqHD/"
      String LocalAlignDir = StagingDir + "align/" + batch
      String LocalSampleDir = LocalAlignDir + "/" + SubDir
      String log = StagingDir + "log/" + Name + "_align.log"

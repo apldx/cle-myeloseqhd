@@ -311,7 +311,7 @@ task combine_variants {
      command {
          /usr/local/bin/bcftools merge --force-samples -Oz ${sep=" " Vcfs} | /usr/local/bin/bcftools sort -Oz -o combined.vcf.gz && \
          /usr/bin/tabix -p vcf combined.vcf.gz && \
-         /usr/bin/python3 /usr/local/bin/filterHaloplex.py -r ${refFasta} --minreadsperfamily ${default='3' MinReadsPerFamily} -m ${default='5' Reads} -d ${default='0.02' Vaf} combined.vcf.gz ${Cram} ${Name} > ${Name}.combined_and_tagged.vcf
+         /usr/bin/python3 /scratch1/fs1/mjwalter/ajay/hacks/filterHaloplex.py -r ${refFasta} --minreadsperfamily ${default='3' MinReadsPerFamily} -m ${default='5' Reads} -d ${default='0.02' Vaf} combined.vcf.gz ${Cram} ${Name} > ${Name}.combined_and_tagged.vcf
      }
 
      runtime {
@@ -472,8 +472,11 @@ task upload_DB {
      String jobGroup
      String queue
 
+     # command {
+     #     /usr/bin/python3 /usr/local/bin/variantDB.py -d ${VariantDB} -v ${Vcf} -c ${CoverageBed} -i ${mrn} -j ${accession}
+     # }
      command {
-         /usr/bin/python3 /usr/local/bin/variantDB.py -d ${VariantDB} -v ${Vcf} -c ${CoverageBed} -i ${mrn} -j ${accession}
+         echo "upload_DB disabled"
      }
      runtime {
          docker_image: "registry.gsc.wustl.edu/mgi-cle/myeloseqhd:v1"

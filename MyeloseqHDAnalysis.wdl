@@ -139,9 +139,7 @@ workflow MyeloseqHDAnalysis {
 
     call gather_files {
         input: order_by=upload_DB.done,
-               OutputFiles=[clean_pindel_itd.cleaned_vcf_file,
-               combine_variants.vcf,
-               run_haplotect.out_file,
+               OutputFiles=[run_haplotect.out_file,
                run_haplotect.sites_file,
                run_vep.vcf,
                run_vep.filtered_vcf],
@@ -199,7 +197,7 @@ task convert_bam {
      >>>
 
      runtime {
-         docker_image: "registry.gsc.wustl.edu/mgi-cle/myeloseqhd:v1"
+         docker_image: "registry.gsc.wustl.edu/mgi-cle/myeloseqhd:v2"
          cpu: "1"
          memory: "24 G"
          queue: queue
@@ -256,7 +254,7 @@ task bgzip_tabix {
          /usr/bin/tabix -p vcf ${Name}.bgzip_tabix.vcf.gz
      }
      runtime {
-         docker_image: "registry.gsc.wustl.edu/mgi-cle/myeloseqhd:v1"
+         docker_image: "registry.gsc.wustl.edu/mgi-cle/myeloseqhd:v2"
          cpu: "1"
          memory: "8 G"
          queue: queue
@@ -283,7 +281,7 @@ task clean_variants {
      }
 
      runtime {
-         docker_image: "registry.gsc.wustl.edu/mgi-cle/myeloseqhd:v1"
+         docker_image: "registry.gsc.wustl.edu/mgi-cle/myeloseqhd:v2"
          cpu: "1"
          memory: "16 G"
          queue: queue
@@ -315,7 +313,7 @@ task combine_variants {
      }
 
      runtime {
-         docker_image: "registry.gsc.wustl.edu/mgi-cle/myeloseqhd:v1"
+         docker_image: "registry.gsc.wustl.edu/mgi-cle/myeloseqhd:v2"
          cpu: "1"
          memory: "10 G"
          queue: queue
@@ -428,7 +426,7 @@ task make_report {
          /bin/mv ./*.report.txt ./*.report.json ${SampleOutDir}
      }
      runtime {
-         docker_image: "registry.gsc.wustl.edu/mgi-cle/myeloseqhd:v1"
+         docker_image: "registry.gsc.wustl.edu/mgi-cle/myeloseqhd:v2"
          cpu: "1"
          memory: "16 G"
          queue: queue
@@ -479,7 +477,7 @@ task upload_DB {
          echo "upload_DB disabled"
      }
      runtime {
-         docker_image: "registry.gsc.wustl.edu/mgi-cle/myeloseqhd:v1"
+         docker_image: "registry.gsc.wustl.edu/mgi-cle/myeloseqhd:v2"
          memory: "4 G"
          queue: queue
          job_group: jobGroup
@@ -500,7 +498,7 @@ task query_DB {
          /usr/bin/python3 /usr/local/bin/variantDB.py -d ${VariantDB} -m ${mrn} -a ${accession}
      }
      runtime {
-         docker_image: "registry.gsc.wustl.edu/mgi-cle/myeloseqhd:v1"
+         docker_image: "registry.gsc.wustl.edu/mgi-cle/myeloseqhd:v2"
          memory: "4 G"
          queue: queue
          job_group: jobGroup

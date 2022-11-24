@@ -489,10 +489,6 @@ for vline in vcffile.fetch(reopen=True):
         if 'dragen' not in callers and len(supportingamplicons) < minampnumber and ao > 0:
             nrec.filter.add("AMPSupport")
 
-        # min vaf filter
-        if rawvaf < minvaf:
-            nrec.filter.add("LowVAF")
-
         # if there are < minstrandreads alt-supporting reads, then calculate the binomial p-value
         # for that observation given the overall VAF and the strand-specific read depth
         if 'dragen' not in callers and ao > 0 and ((plusaltreads+plusrefreads > 0 and plusaltreads < minstrandreads and binom.cdf(minstrandreads, plusaltreads+plusrefreads,rawvaf, loc=0) < strandpvalue) or (minusaltreads+minusrefreads > 0 and minusaltreads < minstrandreads and binom.cdf(minstrandreads, minusaltreads+minusrefreads,rawvaf, loc=0) < strandpvalue)):
@@ -508,7 +504,17 @@ for vline in vcffile.fetch(reopen=True):
             if readdat[(readdat["readquals"]=='pass')].shape[0] / readdat.shape[0] < minhqreads:
                 nrec.filter.add("LowQualReads")
 
-        if ao > 0 and len(nrec.filter.values())==0:
+        # if the dragen called this variant, then just use its read counts
+        if 'dragen' in callers:
+            ro = rec.samples[0]['AD'][0]
+            ao = rec.samples[0]['AD'][1]
+            rawvaf = rec.samples[0]['AF'][0]
+
+        # min vaf filter
+        if rawvaf < minvaf:
+            nrec.filter.add("LowVAF")
+            
+        if rawvaf >= minvaf and len(nrec.filter.values())==0:
             nrec.filter.add("PASS")
 
         mygt = ('.','.')

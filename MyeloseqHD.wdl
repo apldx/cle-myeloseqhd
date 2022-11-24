@@ -7,10 +7,8 @@ workflow MyeloseqHD {
     # index  name  RG_ID  RG_FLOWCELL  RG_LANE  RG_LIB  RG_SAMPLE MRN ALL_MRNs ACCESSION DOB SEX EXCEPTION [R1] [R2]
     
     File? DemuxSampleSheet
-
-    Array[String] Adapters = ["GATCGGAAGAGCACACGTCTGAACTCCAGTCAC","AGATCGGAAGAGCGTCGTGTAGGGAAA"]
-
     String? IlluminaDir
+
     String JobGroup
     String OutputDir
     String RunInfoString
@@ -19,35 +17,36 @@ workflow MyeloseqHD {
     String? CasesExcluded
 
     String Queue
-    String DragenQueue = "duncavagee"
+    String DragenQueue
+    String VariantDB
+
+    Int MinReads
+    Float MinVaf
+    Int readfamilysize = 3
+
+    Array[String] Adapters = ["GATCGGAAGAGCACACGTCTGAACTCCAGTCAC","AGATCGGAAGAGCGTCGTGTAGGGAAA"]
 
     String DragenReference = "/staging/runs/Chromoseq/refdata/dragen_hg38"
-    String Reference    = "/storage1/fs1/duncavagee/Active/SEQ/Chromoseq/process/refdata/hg38/all_sequences.fa"
-    String ReferenceDict = "/storage1/fs1/duncavagee/Active/SEQ/Chromoseq/process/refdata/hg38/all_sequences.dict"
-
-    String VEP          = "/storage1/fs1/gtac-mgi/Active/CLE/reference/VEP_cache"
-    String QcMetrics    = "/storage1/fs1/duncavagee/Active/SEQ/MyeloSeqHD/process/git/cle-myeloseqhd/accessory_files/MyeloseqHDQCMetrics.json"
+    String Reference       = "/storage1/fs1/duncavagee/Active/SEQ/Chromoseq/process/refdata/hg38/all_sequences.fa"
+    String ReferenceDict   = "/storage1/fs1/duncavagee/Active/SEQ/Chromoseq/process/refdata/hg38/all_sequences.dict"
+    String VEP             = "/storage1/fs1/gtac-mgi/Active/CLE/reference/VEP_cache"
 
     String HaplotectBed = "/storage1/fs1/duncavagee/Active/SEQ/MyeloSeqHD/process/git/cle-myeloseqhd/accessory_files/myeloseq.haplotect_snppairs_hg38.bed"
     String AmpliconBed  = "/storage1/fs1/duncavagee/Active/SEQ/MyeloSeqHD/process/git/cle-myeloseqhd/accessory_files/MyeloseqHD.16462-1615924889.Amplicons.hg38.bed"
     String CoverageBed  = "/storage1/fs1/duncavagee/Active/SEQ/MyeloSeqHD/process/git/cle-myeloseqhd/accessory_files/MyeloseqHD.16462-1615924889.CoverageQC.hg38.bed"
-    String DragenCoverageBed = "/staging/runs/MyeloSeqHD/dragen_align_inputs/MyeloseqHD.16462-1615924889.CoverageQC.hg38.bed"
-    String DragenHotspot = "/staging/runs/MyeloSeqHD/dragen_align_inputs/myeloseq_hotspots.vcf.gz"
+    String GenotypeVcf  = "/storage1/fs1/duncavagee/Active/SEQ/MyeloSeqHD/process/git/cle-myeloseqhd/accessory_files/myeloseqhd.forcegenotype.vcf.gz"
+    String QcMetrics    = "/storage1/fs1/duncavagee/Active/SEQ/MyeloSeqHD/process/git/cle-myeloseqhd/accessory_files/MyeloseqHDQCMetrics.json"
+    String Hotspot      = "/storage1/fs1/duncavagee/Active/SEQ/MyeloSeqHD/process/git/cle-myeloseqhd/accessory_files/myeloseq_hotspots.vcf.gz"
 
     String CustomAnnotationVcf   = "/storage1/fs1/duncavagee/Active/SEQ/MyeloSeqHD/process/git/cle-myeloseqhd/accessory_files/myeloseq_custom_annotations.annotated.hg38.vcf.gz"
     String CustomAnnotationIndex = "/storage1/fs1/duncavagee/Active/SEQ/MyeloSeqHD/process/git/cle-myeloseqhd/accessory_files/myeloseq_custom_annotations.annotated.hg38.vcf.gz.tbi"
     String CustomAnnotationParameters = "MYELOSEQ,vcf,exact,0,TCGA_AC,MDS_AC,MYELOSEQBLACKLIST"
-    String GenotypeVcf = "/storage1/fs1/duncavagee/Active/SEQ/MyeloSeqHD/process/git/cle-myeloseqhd/accessory_files/myeloseqhd.forcegenotype.vcf.gz"
-    
-    Int MinReads
-    Float MinVaf
 
-    String QC_pl = "/usr/local/bin/QC_metrics.pl"
+    String QC_pl   = "/usr/local/bin/QC_metrics.pl"
     String xfer_pl = "/storage1/fs1/duncavagee/Active/SEQ/MyeloSeqHD/process/git/cle-myeloseqhd/scripts/data_transfer.pl"
-    String DemuxFastqDir = "/storage1/fs1/gtac-mgi/Active/CLE/assay/myeloseqhd/demux_fastq"
-    String VariantDB  = "/storage1/fs1/gtac-mgi/Active/CLE/validation/cle_validation/CLE_variant_database/myeloseqhd/myeloseqhd_variants.sqlite"
 
-    Int readfamilysize = 3
+    String DemuxFastqDir = "/storage1/fs1/gtac-mgi/Active/CLE/assay/myeloseqhd/demux_fastq"
+
 
     if (defined(DemuxSampleSheet)){
       call dragen_demux {
@@ -85,7 +84,7 @@ workflow MyeloseqHD {
 
         call dragen_align {
             input: DragenRef=DragenReference,
-                   DragenHotspot=DragenHotspot,
+                   Hotspot=Hotspot,
                    fastq1=select_first([trim_reads.read1,samples[13]]),
                    fastq2=select_first([trim_reads.read2,samples[14]]),
                    Name=samples[1],
@@ -94,7 +93,7 @@ workflow MyeloseqHD {
                    LB=samples[5] + '.' + samples[0],
                    readfamilysize=readfamilysize,
                    AmpliconBed=AmpliconBed,
-                   CoverageBed=DragenCoverageBed,
+                   CoverageBed=CoverageBed,
                    OutputDir=OutputDir,
                    SubDir=samples[1] + '_' + samples[0],
                    queue=DragenQueue,
@@ -196,7 +195,13 @@ task dragen_demux {
          /bin/ls ${LocalFastqDir}/*_R2_001.fastq.gz > Read2_list.txt && \
          /bin/mv ${log} ./ && \
          /bin/rm -f ${LocalSampleSheet} && \
-         /bin/cp -r ${LocalReportDir} ${DemuxReportDir}
+         /bin/cp -r ${LocalReportDir} ${DemuxReportDir} && \
+
+         if [ -n "$(/bin/find ${LocalFastqDir}/TW*.fastq.gz -type f -size -10M)" ]; then
+             echo 'demux fastq size checking failed !' && \
+             exit 1
+         fi
+
      >>>
 
      runtime {
@@ -259,7 +264,7 @@ task trim_reads {
      String queue
 
      command {
-         if [[ $Read1 =~ _R1_001 ]]; then
+         if [[ "${Read1}" == *"_R1_001"* ]]; then
              /bin/cp ${Read1} ${Name}.1.fastq.gz && \
              /bin/cp ${Read2} ${Name}.2.fastq.gz
          else
@@ -284,7 +289,7 @@ task trim_reads {
 task dragen_align {
      String Name
      String DragenRef
-     String DragenHotspot
+     String Hotspot
      String fastq1
      String fastq2
      String RG
@@ -316,7 +321,7 @@ task dragen_align {
 
          /bin/mkdir ${LocalSampleDir} && \
          /bin/mkdir ${outdir} && \
-         /opt/edico/bin/dragen -r ${DragenRef} --tumor-fastq1 ${fastq1} --tumor-fastq2 ${fastq2} --RGSM-tumor ${SM} --RGID-tumor ${RG} --RGLB-tumor ${LB} --enable-map-align true --enable-sort true --enable-map-align-output true --vc-enable-umi-liquid true --vc-combine-phased-variants-distance 3 --gc-metrics-enable=true --qc-coverage-region-1 ${CoverageBed} --qc-coverage-reports-1 full_res --umi-enable true --umi-library-type=random-simplex --umi-min-supporting-reads ${readfamilysize} --enable-variant-caller=true --vc-target-bed ${CoverageBed} --enable-sv true --sv-call-regions-bed ${CoverageBed} --sv-exome true --sv-output-contigs true --vc-somatic-hotspots ${DragenHotspot} --umi-metrics-interval-file ${CoverageBed} --read-trimmers=fixed-len --trim-r1-5prime=${default=1 TrimLen} --trim-r1-3prime=${default=1 TrimLen} --trim-r2-5prime=${default=1 TrimLen} --trim-r2-3prime=${default=1 TrimLen} --output-dir ${LocalSampleDir} --output-file-prefix ${Name} --output-format BAM &> ${log} && \
+         /opt/edico/bin/dragen -r ${DragenRef} --tumor-fastq1 ${fastq1} --tumor-fastq2 ${fastq2} --RGSM-tumor ${SM} --RGID-tumor ${RG} --RGLB-tumor ${LB} --enable-map-align true --enable-sort true --enable-map-align-output true --vc-enable-umi-liquid true --vc-combine-phased-variants-distance 3 --vc-enable-triallelic-filter false --gc-metrics-enable=true --qc-coverage-region-1 ${CoverageBed} --qc-coverage-reports-1 full_res --umi-enable true --umi-min-supporting-reads ${readfamilysize} --umi-correction-scheme=random --umi-enable-probability-model-merging=false --umi-fuzzy-window-size=0 --enable-variant-caller=true --vc-target-bed ${CoverageBed} --enable-sv true --sv-call-regions-bed ${CoverageBed} --sv-exome true --sv-output-contigs true --vc-somatic-hotspots ${Hotspot} --umi-metrics-interval-file ${CoverageBed} --read-trimmers=fixed-len --trim-r1-5prime=${default=1 TrimLen} --trim-r1-3prime=${default=1 TrimLen} --trim-r2-5prime=${default=1 TrimLen} --trim-r2-3prime=${default=1 TrimLen} --output-dir ${LocalSampleDir} --output-file-prefix ${Name} --output-format BAM &> ${log} && \
          /bin/mv ${log} ./ && \
          /bin/mv ${LocalSampleDir} ${dragen_outdir}
      }
@@ -378,7 +383,7 @@ task batch_qc {
          /usr/bin/perl ${QC_pl} ${BatchDir}
      }
      runtime {
-         docker_image: "registry.gsc.wustl.edu/mgi-cle/myeloseqhd:v1"
+         docker_image: "registry.gsc.wustl.edu/mgi-cle/myeloseqhd:v2"
          memory: "4 G"
          queue: queue
          job_group: jobGroup
